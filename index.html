@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Speedcubing Analytics Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background: #1a1a1a;
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .header {
+            min-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            padding: 4rem 2rem;
+            background-image: url('https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExbHZiaXR4djJwMWRyZTBtOW5uaDQ5eXZrdmkyY2hqNmhmYXlnNW85aiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/kFuavIYvRQZGg/giphy.gif'); /* Update this path */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            position: relative;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                135deg,
+                rgba(26, 26, 26, 0.9),
+                rgba(26, 26, 26, 0.7)
+            );
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            max-width: 800px;
+        }
+
+        .header h1 {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, 
+                #FF4136, #FF851B, #FFDC00, 
+                #2ECC40, #0074D9, #B10DC9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(255,255,255,0.1);
+            animation: titleGlow 3s ease-in-out infinite;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #fff;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        @keyframes titleGlow {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .rotating-cube {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            perspective: 1000px;
+            animation: floatCube 6s ease-in-out infinite;
+        }
+
+        .cube-left { left: 10%; top: 20%; }
+        .cube-right { right: 10%; bottom: 20%; }
+
+        @keyframes floatCube {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .vis-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .vis-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .vis-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, 
+                #FF4136 0%, 
+                #FF851B 20%, 
+                #FFDC00 40%, 
+                #2ECC40 60%, 
+                #0074D9 80%, 
+                #B10DC9 100%
+            );
+        }
+
+        .vis-card h2 {
+            color: #fff;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .vis-card p {
+            color: #ccc;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .btn-explore {
+            background: linear-gradient(45deg, #0074D9, #7FDBFF);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            color: white;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            margin-top: 1rem;
+        }
+
+        .btn-explore:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(0,116,217,0.5);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1>Speedcubing Analytics Dashboard</h1>
+            <p>Explore the world of competitive cubing through interactive visualizations and detailed analysis of global performance metrics.</p>
+        </div>
+        <div class="rotating-cube cube-left"></div>
+        <div class="rotating-cube cube-right"></div>
+    </header>
+
+    <div class="container">
+        <div class="vis-card">
+            <h2>Top Speedcubers Performance</h2>
+            <p>Interactive visualization tracking the world's top 10 speedcubers across their recent competitions. Compare solve times, consistency, and trends through dynamic line graphs. Toggle between competitors to analyze their performance patterns and improvements over time.</p>
+            <a href="line-chart.html" class="btn-explore">Explore Data</a>
+        </div>
+
+        <div class="vis-card">
+            <h2>Cross-Category Analysis</h2>
+            <p>Interactive heatmap comparing top speedcubers across different solving categories. Discover specialists and all-rounders through color-coded performance indicators. Toggle between best times and averages to gain comprehensive insights into competitor strengths.</p>
+            <a href="heatmap.html" class="btn-explore">View Analysis</a>
+        </div>
+
+        <div class="vis-card">
+            <h2>Global Competition Map</h2>
+            <p>Dynamic worldwide visualization of speedcubing events. Explore competitions filtered by date, location, and participant limits. Interactive markers reveal event details, while heatmap overlays highlight competition hotspots and regional trends.</p>
+            <a href="cutu.html" class="btn-explore">Open Map</a>
+        </div>
+    </div>
+
+    <script>
+    
+        document.querySelectorAll('.vis-card').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                card.style.background = `
+                    radial-gradient(
+                        circle at ${x}px ${y}px,
+                        rgba(255,255,255,0.1) 0%,
+                        rgba(255,255,255,0.05) 50%,
+                        rgba(255,255,255,0.02) 100%
+                    )
+                `;
+            });
+
+            card.addEventListener('mouseleave', () => {
+                card.style.background = 'rgba(255,255,255,0.05)';
+            });
+        });
+
+        document.querySelectorAll('.btn-explore').forEach(button => {
+            button.addEventListener('click', function(e) {
+                let ripple = document.createElement('div');
+                this.appendChild(ripple);
+                let x = e.clientX - e.target.offsetLeft;
+                let y = e.clientY - e.target.offsetTop;
+                ripple.style.left = `${x}px`;
+                ripple.style.top = `${y}px`;
+                setTimeout(() => {
+                    ripple.remove();
+                }, 1000);
+            });
+        });
+    </script>
+</body>
+</html>

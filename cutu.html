@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Global Speedcubing Competitions Map</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://unpkg.com/topojson@3"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
+      color: #2a4365;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #2a4365;
+      margin-bottom: 30px;
+      font-size: 2.5em;
+    }
+    .controls {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 20px;
+      background: #f8fafc;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+    }
+    .control-group {
+      flex: 1;
+      min-width: 200px;
+    }
+    .control-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: #2a4365;
+    }
+    input[type="date"] {
+      width: 100%;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #cbd5e0;
+      background: white;
+      color: #2a4365;
+    }
+    input[type="range"] {
+      width: 100%;
+      height: 8px;
+      border-radius: 4px;
+      background: #e2e8f0;
+    }
+    .map-container {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #f8fafc;
+      padding: 10px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      border: 1px solid #e2e8f0;
+    }
+    .tooltip {
+      position: fixed;
+      background: rgba(255, 255, 255, 0.95);
+      color: #2a4365;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      pointer-events: none;
+      font-size: 14px;
+      max-width: 300px;
+      z-index: 1000;
+      border: 1px solid #e2e8f0;
+    }
+    .marker {
+      cursor: pointer;
+      transition: all 0.3s ease;
+      filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.2));
+    }
+    .marker:hover {
+      transform: scale(1.3);
+      filter: drop-shadow(0 0 12px rgba(0, 0, 0, 0.3));
+    }
+    .country {
+      transition: all 0.3s ease;
+    }
+    .country:hover {
+      stroke: #4299e1;
+      stroke-width: 1.5;
+    }
+    .country.highlighted {
+      stroke: #2b6cb0;
+      stroke-width: 2;
+    }
+    .competition-stats {
+      margin-top: 20px;
+      padding: 20px;
+      background: #f8fafc;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-top: 15px;
+    }
+    .stat-card {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #2a4365;
+      margin: 10px 0;
+    }
+    .stat-label {
+      color: #4a5568;
+      font-size: 14px;
+    }
+    .legend {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      min-width: 200px;
+    }
+    
+    .legend-title {
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #2a4365;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      color: #4a5568;
+    }
+    
+    .legend-icon {
+      font-size: 16px;
+      width: 20px;
+      text-align: center;
+    }
+    
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 1px solid black;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🏆 Global Speedcubing Competitions Map</h1>
+    <div class="controls">
+      <div class="control-group">
+        <label for="startDate">Start Date:</label>
+        <input type="date" id="startDate" value="2025-02-14" />
+      </div>
+      <div class="control-group">
+        <label for="endDate">End Date:</label>
+        <input type="date" id="endDate" value="2025-02-25" />
+      </div>
+      <div class="control-group">
+        <label for="competitorLimit">Max Competitor Limit: <span id="limitValue">500</span></label>
+        <input type="range" id="competitorLimit" min="0" max="500" value="500" step="10" />
+      </div>
+    </div>
+    <div class="map-container">
+      <div id="map"></div>
+      <div class="tooltip" style="display: none;"></div>
+      <div class="legend">
+        <div class="legend-scale"></div>
+      </div>
+    </div>
+    <div class="competition-stats">
+      <h3>Competition Statistics</h3>
+      <div id="stats" class="stats-grid"></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-title">Map Legend</div>
+    <div class="legend-item">
+      <span class="legend-icon">📍</span>
+      <span>Competition Location</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background-color: blue;"></div>
+      <span>Your Current Location</span>
+    </div>
+  </div>
+
+  <script>
+ 
+    const cityCoords = {
+      "Pittsford": { lat: 43.0887, lng: -77.5185 },
+      "Atlanta": { lat: 33.7490, lng: -84.3880 },
+      "Lexington": { lat: 38.0406, lng: -84.5037 },
+      "Phoenix": { lat: 33.4484, lng: -112.0740 },
+      "Reno": { lat: 39.5296, lng: -119.8138 },
+      "Cambridge": { lat: 42.3736, lng: -71.1097 },
+      "Madison": { lat: 43.0731, lng: -89.4012 },
+      "Edmond": { lat: 35.6528, lng: -97.4781 },
+      "Rising Fawn": { lat: 34.7634, lng: -85.3824 },
+      "Spokane": { lat: 47.6579, lng: -117.4260 },
+      "Elmsford": { lat: 41.0537, lng: -73.8190 },
+      "Natchez": { lat: 31.5604, lng: -91.4032 },
+      "Lancaster": { lat: 40.0379, lng: -76.3055 },
+      "Cincinnati": { lat: 39.1031, lng: -84.5120 },
+      "Denver": { lat: 39.7392, lng: -104.9903 },
+      "Tallahassee": { lat: 30.4383, lng: -84.2807 },
+      "Flushing New York": { lat: 40.7674, lng: -73.8331 },
+      "Oxford Ohio": { lat: 39.5070, lng: -84.7452 },
+      "Oxford": { lat: 39.5070, lng: -84.7452 },
+      "Orem": { lat: 40.2969, lng: -111.6946 },
+      "Rising Fawn Georgia": { lat: 34.7579, lng: -85.6086 },
+      // Europe
+      "Nürnberg": { lat: 49.4521, lng: 11.0767 },
+      "Lublin": { lat: 51.2465, lng: 22.5684 },
+      "Gdańsk": { lat: 54.3520, lng: 18.6466 },
+      "Jönköping": { lat: 57.7826, lng: 14.1618 },
+      "Amadora": { lat: 38.7500, lng: -9.2333 },
+      "Plzeň": { lat: 49.7475, lng: 13.3776 },
+      "Trikala": { lat: 39.5557, lng: 21.7687 },
+      "Amorebieta": { lat: 43.2203, lng: -2.7331 },
+      "Sireuil": { lat: 45.6431, lng: 0.0236 },
+      "Chelles": { lat: 48.8771, lng: 2.5986 },
+      "Crewe": { lat: 53.0977, lng: -2.4418 },
+      "Kilkenny": { lat: 52.6541, lng: -7.2448 },
+      "San Daniele del Friuli": { lat: 46.1615, lng: 13.0076 },
+      "Sandnes": { lat: 58.8513, lng: 5.7357 },
+      "Münsterlingen": { lat: 47.6367, lng: 9.2238 },
+      "Móstoles": { lat: 40.3228, lng: -3.8644 },
+      "Wrocław": { lat: 51.1079, lng: 17.0385 },
+      "Biała Podlaska": { lat: 52.0321, lng: 23.1457 },
+      "Helsinki": { lat: 60.1699, lng: 24.9384 },
+      "Uppsala": { lat: 59.8586, lng: 17.6389 },
+      "Sollentuna": { lat: 59.4283, lng: 17.9509 },
+      "Dębica": { lat: 50.0518, lng: 21.4120 },
+      "Warszawa": { lat: 52.2297, lng: 21.0122 },
+      "Landvetter": { lat: 57.6847, lng: 12.2168 },
+      "Manchester": { lat: 53.4808, lng: -2.2426 },
+      "Trondheim": { lat: 63.4305, lng: 10.3951 },
+      "Jaén": { lat: 37.7796, lng: -3.7849 },
+      "Vilafranca del Penedès": { lat: 41.3462, lng: 1.6986 },
+      "olten": { lat: 47.3500, lng: 7.9037 },
+      "Aarhus": { lat: 56.1629, lng: 10.2039 },
+      "Långsand": { lat: 61.1892, lng: 15.7194 },
+      "Bratislava": { lat: 48.1486, lng: 17.1077 },
+      "Eastleigh": { lat: 50.9764, lng: -1.3502 },
+      "Mouscron": { lat: 50.7445, lng: 3.2141 },
+      "Osijek": { lat: 45.5550, lng: 18.6955 },
+      "Kyiv": { lat: 50.4501, lng: 30.5234 },
+      "Truro": { lat: 50.2632, lng: -5.0510 },
+      "Roma": { lat: 41.9028, lng: 12.4964 },
+      "Laives": { lat: 46.4285, lng: 11.3389 },
+      "Laudenbach": { lat: 49.6422, lng: 8.6408 },
+      "Hvidovre": { lat: 55.6327, lng: 12.4724 },
+      // Asia
+      "Bishkek": { lat: 42.8746, lng: 74.5698 },
+      "Chiang Mai": { lat: 18.7883, lng: 98.9853 },
+      "Mumbai": { lat: 19.0760, lng: 72.8777 },
+      "Jakarta": { lat: -6.2088, lng: 106.8456 },
+      "Singapore": { lat: 1.3521, lng: 103.8198 },
+      "Rishon Letzion": { lat: 31.9640, lng: 34.8044 },
+      "Nagpur": { lat: 21.1458, lng: 79.0882 },
+      "Alappuzha": { lat: 9.4981, lng: 76.3388 },
+      "Ota": { lat: 36.2919, lng: 139.3711 },
+      "Al-Bireh": { lat: 31.9100, lng: 35.2200 },
+      "Hawally": { lat: 29.3375, lng: 48.0094 },
+      "Ulaanbaatar": { lat: 47.8864, lng: 106.9057 },
+      "New Delhi": { lat: 28.6139, lng: 77.2090 },
+      "Delhi": { lat: 28.7041, lng: 77.1025 },
+      "Tashkent": { lat: 41.2995, lng: 69.2401 },
+      "Istanbul": { lat: 41.0082, lng: 28.9784 },
+      "Bangkok": { lat: 13.7563, lng: 100.5018 },
+      "Trichy": { lat: 10.7905, lng: 78.7047 },
+      "Gandhinagar": { lat: 23.2156, lng: 72.6369 },
+      // Americas
+      "Bucaramanga": { lat: 7.1254, lng: -73.1198 },
+      "Red Deer": { lat: 52.2690, lng: -113.8116 },
+      "Osório": { lat: -29.8881, lng: -50.2667 },
+      "Bogotá": { lat: 4.7110, lng: -74.0721 },
+      "Campos do Jordão": { lat: -22.7397, lng: -45.5977 },
+      "Duque de Caxias": { lat: -22.7868, lng: -43.3116 },
+      "Salamanca": { lat: 20.5714, lng: -101.1958 },
+      "Huancayo": { lat: -12.0650, lng: -75.2049 },
+      "Asunción": { lat: -25.2867, lng: -57.3333 },
+      "Mexicali": { lat: 32.6245, lng: -115.4522 },
+      "San Jose": { lat: 37.3382, lng: -121.8863 },
+      "Cochabamba": { lat: -17.4139, lng: -66.1653 },
+      "Chilliwack": { lat: 49.1579, lng: -121.9514 },
+      "Piedecuesta": { lat: 7.0000, lng: -73.0500 },
+      "Barquisimeto": { lat: 10.0678, lng: -69.3467 },
+      "Vila Velha": { lat: -20.3297, lng: -40.2925 },
+      "Hermosillo": { lat: 29.0729, lng: -110.9559 },
+      "Lima": { lat: -12.0464, lng: -77.0428 },
+      "Cali Valle del Cauca": { lat: 3.4516, lng: -76.5320 },
+      "Arica": { lat: -18.4783, lng: -70.3126 },
+      "Imus": { lat: 14.4295, lng: 120.9367 },
+      "Cork": { lat: 51.8985, lng: -8.4756 },
+      "Rogów": { lat: 51.8176, lng: 19.8865 },
+      // Oceania
+      "Ballarat": { lat: -37.5622, lng: 143.8503 },
+      "Auckland": { lat: -36.8509, lng: 174.7645 },
+      "Melbourne": { lat: -37.8136, lng: 144.9631 },
+      "Pucallpa": { lat: -8.3791, lng: -74.5539 },
+      "Rabat": { lat: 34.0209, lng: -6.8416 },
+      "Oshawa": { lat: 43.8975, lng: -78.8658 },
+      "Sepang": { lat: 2.6932, lng: 101.7505 }
+    };
+
+    const width = 1160;
+    const height = 600;
+
+    const svg = d3.select("#map")  <!-- <div class="legend-title">Competitions per Country</div> -->
+      .append("svg")
+      .attr("width", width)
+      .attr("height", height);
+
+    const zoom = d3.zoom()
+      .scaleExtent([1, 8])
+      .on("zoom", zoomed);
+
+    svg.call(zoom);
+
+    const g = svg.append("g");
+
+    const projection = d3.geoMercator()
+      .scale(150)
+      .translate([width / 2, height / 1.8]);
+
+    const path = d3.geoPath().projection(projection);
+
+    function zoomed(event) {
+      g.attr("transform", event.transform);
+    }
+
+    const colorScale = d3.scaleQuantize()
+      .domain([0, 20]) 
+      .range(['#f7fbff', '#c8ddf0', '#73b3d8', '#2879b9', '#08306b']);
+
+    Promise.all([
+      d3.json("https://unpkg.com/world-atlas@2.0.2/countries-110m.json"),
+      d3.csv("new1.csv")
+    ]).then(([world, competitions]) => {
+      const countries = topojson.feature(world, world.objects.countries);
+
+      g.selectAll("path")
+        .data(countries.features)
+        .enter()
+        .append("path")
+        .attr("d", path)
+        .attr("class", "country")
+        .attr("fill", "#e6f3ff")
+        .attr("stroke", "#a3bffa")
+        .attr("stroke-width", 0.5);
+
+      const processedData = competitions.map(d => {
+
+        const cityCoord = cityCoords[d.City.trim()];
+        const coordinates = cityCoord
+          ? projection([cityCoord.lng, cityCoord.lat])
+          : projection([0, 0]);
+
+        return {
+          ...d,
+          date: new Date(d.Date.split("-")[0].trim() + " 2025"),
+          competitorLimit: +d["Comepetitor Limit"],
+          coordinates: coordinates
+        };
+      });
+
+      function updateMap() {
+
+    navigator.geolocation.getCurrentPosition(function(position) {
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+
+      d3.select("svg")
+        .append("circle")
+        .attr("cx", projection([longitude, latitude])[0])
+        .attr("cy", projection([longitude, latitude])[1])
+        .attr("r", 5)
+        .attr("fill", "blue")
+        .attr("stroke", "black")
+        .attr("stroke-width", 1);
+    });
+        const startDate = new Date(d3.select("#startDate").property("value"));
+        const endDate = new Date(d3.select("#endDate").property("value"));
+        const maxLimit = +d3.select("#competitorLimit").property("value");
+
+        const filteredData = processedData.filter(d =>
+          d.date >= startDate &&
+          d.date <= endDate &&
+          d.competitorLimit <= maxLimit
+        );
+        const competitionCounts = {};
+        filteredData.forEach(d => {
+          competitionCounts[d.Country] = (competitionCounts[d.Country] || 0) + 1;
+        });
+        const maxComps = Math.max(...Object.values(competitionCounts), 1);
+        colorScale.domain([0, maxComps]);
+        updateLegend(maxComps);
+        const markers = g.selectAll(".marker-group")
+          .data(filteredData, d => d["Name of Event"]);
+
+        markers.exit().remove();
+
+        const markerEnter = markers.enter()
+          .append("g")
+          .attr("class", "marker-group")
+          .attr("transform", d => `translate(${d.coordinates[0]},${d.coordinates[1]})`);
+
+        markerEnter.append("text")
+          .attr("class", "marker")
+          .text("📍")
+          .attr("text-anchor", "middle")
+          .attr("alignment-baseline", "middle")
+          .style("font-size", "18px");
+
+        markers.merge(markerEnter)
+          .transition()
+          .duration(500)
+          .attr("transform", d => `translate(${d.coordinates[0]},${d.coordinates[1]})`);
+
+        svg.selectAll(".marker-group")
+          .on("mouseover", (event, d) => {
+            showTooltip(event, d);
+            highlightCountry(d.Country);
+          })
+          .on("mouseout", (event, d) => {
+            hideTooltip();
+            unhighlightCountry();
+          });
+
+        updateStats(filteredData);
+      }
+
+      function updateLegend(maxComps) {
+        const thresholds = colorScale.thresholds();
+        const domain = colorScale.domain(); 
+        const legendItems = [];
+
+        const legendHTML = legendItems.map(item => `
+          <div class="legend-item" style="display: flex; align-items: center; gap: 5px;">
+            <div class="legend-box" style="background: ${item.color};"></div>
+            <span style="font-size: 12px;">${item.label}</span>
+          </div>
+        `).join('');
+
+        d3.select(".legend-scale").html(legendHTML);
+      }
+
+      function highlightCountry(countryName) {
+        g.selectAll(".country")
+          .classed("highlighted", d => d.properties.name === countryName);
+      }
+
+      function unhighlightCountry() {
+        g.selectAll(".country").classed("highlighted", false);
+      }
+
+      function showTooltip(event, d) {
+        const tooltip = d3.select(".tooltip");
+        tooltip.style("display", "block")
+          .html(`
+            <strong style="color: #2b6cb0">${d["Name of Event"]}</strong><br>
+            <span style="color: #4a5568">Location:</span> ${d.City}, ${d.Country}<br>
+            <span style="color: #4a5568">Date:</span> ${d.Date}<br>
+            <span style="color: #4a5568">Competitor Limit:</span> ${d.competitorLimit}<br>
+            <span style="color: #4a5568">Venue:</span> ${d.Venue}
+          `)
+          .style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY - 10) + "px");
+      }
+
+      function hideTooltip() {
+        d3.select(".tooltip").style("display", "none");
+      }
+
+      function updateStats(filteredData) 
+      {
+        const totalEvents = filteredData.length;
+        const totalCompetitors = d3.sum(filteredData, d => d.competitorLimit);
+        const avgCompetitors = Math.round(totalCompetitors / totalEvents) || 0;
+        const countriesCount = new Set(filteredData.map(d => d.Country)).size;
+        const citiesCount = new Set(filteredData.map(d => d.City)).size;
+        const statsHTML = `
+          <div class="stat-card">
+            <div class="stat-value">${totalEvents}</div>
+            <div class="stat-label">Total Events</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${totalCompetitors.toLocaleString()}</div>
+            <div class="stat-label">Total Competitor Capacity</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${avgCompetitors}</div>
+            <div class="stat-label">Avg Competitors per Event</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${countriesCount}</div>
+            <div class="stat-label">Countries</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${citiesCount}</div>
+            <div class="stat-label">Cities</div>
+          </div>
+        `;
+        d3.select("#stats").html(statsHTML);
+      }
+      d3.select("#startDate").on("change", updateMap);
+      d3.select("#endDate").on("change", updateMap);
+      d3.select("#competitorLimit").on("input", function () {
+        d3.select("#limitValue").text(this.value);
+        updateMap();
+      });
+      updateMap();
+    });
+  </script>
+</body>
+</html>

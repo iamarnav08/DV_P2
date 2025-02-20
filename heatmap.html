@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Heatmap</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: start;
+            min-height: 100vh;
+            margin: 0;
+            background-image: url('image.avif');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 5px solid rgb(198, 63, 160);
+            border-radius: 15px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.323);
+            padding: 1px 20px;
+            width: 80%;
+            max-width: 1200px;
+            margin: 20px auto;
+            text-align: center;
+        }
+        .heatmap-legend-container {
+            display: flex;
+            align-items: center; /* Ensures the gradient and graph sit on the same horizontal baseline */
+            justify-content: center;
+        }
+        #heatmap {
+            margin-right: 30px;
+        }
+        .legend {
+            text-align: left;
+        }
+        .legend svg {
+            border: 2px solid black; /* Border around the gradient */
+            overflow: visible;       /* Ensure text is not clipped */
+        }
+        .tooltip {
+            position: absolute;
+            text-align: center;
+            padding: 5px;
+            font: 12px sans-serif;
+            background: lightsteelblue;
+            border-radius: 8px;
+            pointer-events: none;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Performance Grid for Top 10 Players</h1>
+        <p style="font-size: 14px; margin-top: -30px;">(Top 5 most popular categories)</p>
+        <div class="heatmap-legend-container">
+            <div id="heatmap"></div>
+            <div class="legend">
+                <svg width="20" height="320">
+                    <defs>
+                        <linearGradient id="gradient" x1="0%" x2="0%" y1="0%" y2="100%">
+                            <stop offset="0%" stop-color="red" />
+                            <stop offset="50%" stop-color="yellow" />
+                            <stop offset="100%" stop-color="green" />
+                        </linearGradient>
+                    </defs>
+                    <!-- Main gradient bar -->
+                    <rect width="20" height="320" x="0" y="0" fill="url(#gradient)" />
+                    <!-- Markers -->
+                    <text x="25" y="15" font-size="14" alignment-baseline="middle" fill="black">Worst</text>
+                    <text x="25" y="305" font-size="14" alignment-baseline="middle" fill="black">Best</text>
+                </svg>
+            </div>
+        </div>
+        <div style="margin-top: 20px;">
+            <button onclick="updateHeatmap('single')">Show Single Times</button>
+            <button onclick="updateHeatmap('average')">Show Average Times</button>
+        </div>
+    </div>
+    <script src="heatmap.js"></script>
+</body>
+</html>
