@@ -405,19 +405,32 @@
 
       function updateMap() {
 
+    // navigator.geolocation.getCurrentPosition(function(position) {
+    //   const latitude = position.coords.latitude;
+    //   const longitude = position.coords.longitude;
+
+    //   d3.select("svg")
+    //     .append("circle")
+    //     .attr("cx", projection([longitude, latitude])[0])
+    //     .attr("cy", projection([longitude, latitude])[1])
+    //     .attr("r", 5)
+    //     .attr("fill", "blue")
+    //     .attr("stroke", "black")
+    //     .attr("stroke-width", 1);
+    // });
     navigator.geolocation.getCurrentPosition(function(position) {
       const latitude = position.coords.latitude;
       const longitude = position.coords.longitude;
 
-      d3.select("svg")
-        .append("circle")
+      // Append the marker to the zoomable group "g" so it moves with the map
+      g.append("circle")
         .attr("cx", projection([longitude, latitude])[0])
         .attr("cy", projection([longitude, latitude])[1])
         .attr("r", 5)
         .attr("fill", "blue")
         .attr("stroke", "black")
         .attr("stroke-width", 1);
-    });
+     });
         const startDate = new Date(d3.select("#startDate").property("value"));
         const endDate = new Date(d3.select("#endDate").property("value"));
         const maxLimit = +d3.select("#competitorLimit").property("value");
